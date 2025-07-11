@@ -58,6 +58,11 @@ export default function Login() {
                     <Box component="form" onSubmit={handleSubmit(mutate)}>
                         <InputField type="email" control={control} name="email" label="Email" />
                         <PasswordField control={control} name="password" label="Password" />
+                        <Box mt={1} mb={2} display="flex" justifyContent="flex-end">
+                            <Link href="#" component={RouterLink} to="/forgot-password" variant="body2">
+                                Forgot Password?
+                            </Link>
+                        </Box>
                         <Box mt={1}>
                             <Button type="submit" variant="contained" fullWidth loading={isPending} loadingPosition="start">
                                 Login

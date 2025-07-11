@@ -7,6 +7,9 @@ import PublicRoute from './components/routes/PublicRoute.jsx';
 import ProtectedRoute from './components/routes/ProtectedRoute.jsx';
 import TaskList from './pages/TaskList.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import VerifyForgotPassword from './pages/VerifyForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 
 export default function App() {
     return (
@@ -15,6 +18,9 @@ export default function App() {
                 <Route element={<PublicRoute />}>
                     <Route path="login" element={<Login />} />
                     <Route path="register" element={<Register />} />
+                    <Route path="forgot-password" element={<ForgotPassword />} />
+                    <Route path="forgot-password/verify" element={<VerifyForgotPassword />} />
+                    <Route path="reset-password" element={<ResetPassword />} />
                     <Route index element={<Navigate to="/login" replace />} />
                 </Route>
                 <Route element={<ProtectedRoute />}>

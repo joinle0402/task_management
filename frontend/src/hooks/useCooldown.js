@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export function useCooldown(storageKey, durationMs) {
+export function useCooldown(storageKey, durationMs = 60_000) {
     const [cooldownExpiresAt, setCooldownExpiresAt] = useState(null);
     const cooldown = cooldownExpiresAt ? Math.ceil((cooldownExpiresAt - Date.now()) / 1000) : 0;
     const cooldownActive = cooldown > 0;

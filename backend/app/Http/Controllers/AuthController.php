@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\VerificationCodeType;
+use App\Http\Requests\Auth\EmailRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
@@ -13,8 +14,11 @@ use App\Models\VerificationCode;
 use App\Notifications\VerificationCodeNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -126,12 +130,10 @@ class AuthController extends Controller
         return $request->user();
     }
 
-    public function sendResetPasswordOtp(Request $request): JsonResponse
+    public function forgotPassword(EmailRequest $request): JsonResponse
     {
-        $request->validate(['email' => 'required|email']);
-
         $user = User::whereEmail($request->email)->first();
-        abort_if(empty($user), Response::HTTP_NOT_FOUND, "User not found!");
+        if (empty($user)) return json_message('Password reset code sent to your email address.');
 
         $verificationCode = $this->sendVerificationCode($user, VerificationCodeType::PASSWORD_RESET, "Your password reset code is @otp", "Password reset code");
 
@@ -143,27 +145,57 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * @throws Throwable
-     */
-    public function resetPasswordOtp(ResetPasswordRequest $request): JsonResponse
+    public function resendForgotPassword(EmailRequest $request): JsonResponse
     {
-        $user = User::whereEmail($request->validated('email'))->first();
-        abort_if(empty($user), Response::HTTP_NOT_FOUND, "User not found!");
+        $user = User::whereEmail($request->email)->first();
+        if (empty($user)) return json_message('Password reset code resent to your email address.');
+
+        abort_if(!RateLimiter::attempt("resend-otp:".$user->id, 1, fn() => true), Response::HTTP_TOO_MANY_REQUESTS, "Please wait before requesting another code.");
+
+        $this->sendVerificationCode($user, VerificationCodeType::PASSWORD_RESET, "Your password reset code is @otp", "Password reset code");
+        return response()->json([
+            'message' => 'OTP resent successfully.',
+            'data' => ['expired_at' => now()->addMinutes(10)],
+        ]);
+    }
+
+    public function verifyForgotPassword(VerifyEmailRequest $request): JsonResponse
+    {
+        $user = User::where('email', $request->email)->first();
+        abort_if(empty($user), Response::HTTP_NOT_FOUND, "Email is not exists!");
 
         $verificationCode = VerificationCode::where('user_id', $user->id)
-            ->where('code', $request->otp)
+            ->where('code', $request->validated('otp'))
             ->where('type', VerificationCodeType::PASSWORD_RESET)
-            ->where('expired_at', '>', now())
             ->first();
-        abort_if(empty($verificationCode), Response::HTTP_BAD_REQUEST, "Invalid or expired OTP.");
+        abort_if(empty($verificationCode), Response::HTTP_UNPROCESSABLE_ENTITY, "Invalid verification code.");
+        abort_if(now()->greaterThan($verificationCode->expired_at), Response::HTTP_UNPROCESSABLE_ENTITY, "Verification code has expired.");
 
-        return DB::transaction(function () use ($request, $user, $verificationCode) {
-            $user->password = Hash::make($request->password);
-            $user->save();
-            $verificationCode->delete();
-            return json_message('Password reset successfully.');
-        });
+        $verificationCode->delete();
+        $token = Str::uuid()->toString();
+        Cache::put("forgot-password-token:$token", $user->id, now()->addMinutes(15));
+
+        return response()->json([
+            'message' => 'OTP verified. Proceed to reset your password.',
+            'data' => ['token' => $token],
+        ]);
+    }
+
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $userId = Cache::pull('forgot-password-token:'.$request->token);
+        abort_if(empty($userId), Response::HTTP_UNPROCESSABLE_ENTITY, "Invalid or expired token!");
+
+        $user = User::find($userId);
+        abort_if(empty($user), Response::HTTP_NOT_FOUND, "User not found!");
+
+        if (Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages(['password' => 'New password must be different from the current password.']);
+        }
+
+        $user->update(['password' => $request->password]);
+
+        return json_message('Password reset successfully.');
     }
 
     public function verificationStatus(Request $request): JsonResponse

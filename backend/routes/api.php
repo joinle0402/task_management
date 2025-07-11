@@ -11,8 +11,10 @@ Route::prefix('/v1')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
 
-        Route::post('/forgot-password', [AuthController::class, 'sendResetPasswordOtp']);
-        Route::post('/reset-password', [AuthController::class, 'resetPasswordOtp']);
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::post('/forgot-password/resend', [AuthController::class, 'resendForgotPassword']);
+        Route::post('/forgot-password/verify', [AuthController::class, 'verifyForgotPassword']);
+        Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
         Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('/profile', [AuthController::class, 'profile']);

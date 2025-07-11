@@ -15,7 +15,6 @@ export function AuthProvider({ children }) {
         queryKey: ['profile'],
         queryFn: async () => {
             const profileUser = await http.get('/auth/profile');
-            console.log(profileUser);
             setProfileUser(profileUser);
             return profileUser;
         },

@@ -1,15 +1,12 @@
 import http from '../http.js';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { showSuccess } from '../utilities/toast.jsx';
-import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext.jsx';
 import { LoaderContext } from '../contexts/LoaderContext.jsx';
 import { use } from 'react';
 
 export function useLogout() {
-    const navigate = useNavigate();
-    const queryClient = useQueryClient();
-    const { setAccessToken } = use(AuthContext);
+    const { logout } = use(AuthContext);
     const { showLoading, hideLoading } = use(LoaderContext);
 
     return useMutation({
@@ -25,10 +22,8 @@ export function useLogout() {
         onSettled: () => {
             // ✅ Always run this, whether logout succeeds or fails
             hideLoading();
-            localStorage.removeItem('access_token');
-            queryClient.removeQueries();
-            setAccessToken(null);
-            navigate('/login');
+            logout();
+            
         },
     });
 }

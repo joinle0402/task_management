@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Throwable;
 
 class AuthController extends Controller
@@ -83,12 +84,8 @@ class AuthController extends Controller
     public function login(LoginRequest $request): Response
     {
         $user = User::whereEmail($request->validated('email'))->first();
-        abort_if(empty($user), Response::HTTP_NOT_FOUND, "User not found!");
-
-        if (!Hash::check($request->validated('password'), $user->password)) {
-            throw ValidationException::withMessages(['email' => 'Username or password is incorrect.']);
-        }
-
+        abort_if(empty($user), Response::HTTP_UNAUTHORIZED, "Username or password is incorrect.");
+        abort_if(empty(Hash::check($request->validated('password'), $user->password)), Response::HTTP_UNAUTHORIZED, "Username or password is incorrect.");
         return DB::transaction(function () use ($user) {
             return $this->buildAuthenticationResponse('Logged in successfully.', $user);
         });
@@ -172,10 +169,7 @@ class AuthController extends Controller
     public function verificationStatus(Request $request): JsonResponse
     {
         $user = $request->user();
-        $verification = VerificationCode::where('user_id', $user->id)
-            ->where('type', VerificationCodeType::EMAIL_VERIFICATION)
-            ->latest()
-            ->first();
+        $verification = VerificationCode::where('user_id', $user->id)->where('type', VerificationCodeType::EMAIL_VERIFICATION)->latest()->first();
         return response()->json([
             'email' => $user->email,
             'isVerified' => $user->hasVerifiedEmail(),
@@ -183,20 +177,22 @@ class AuthController extends Controller
         ]);
     }
 
-    private function buildAuthenticationResponse(string $message, User $user): Response
+    private function buildAuthenticationResponse(string $message, User|BelongsTo $user): Response
     {
         $accessToken = $user->createToken('access_token', ['*'], now()->addMinutes(config('sanctum.expiration', 10)))->plainTextToken;
         $refreshTokenPlain = str()->random(60);
-        RefreshToken::create([
-            'user_id' => $user->id,
-            'token' => hash('sha256', $refreshTokenPlain),
-            'expired_at' => now()->addDays(7)
-        ]);
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', $refreshTokenPlain), 'expired_at' => now()->addDays(7)]);
+        cookie()->queue('refresh_token', $refreshTokenPlain, 10080, '/', null, true, true, false, 'Strict');
         return response([
             'message' => $message,
-            'access_token' => $accessToken
-        ])
-        ->cookie('refresh_token', $refreshTokenPlain, 10080, '/', null, true, true, false, 'Strict');
+            'access_token' => $accessToken,
+            'profile' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'email_verified_at' => $user->email_verified_at,
+            ],
+        ]);
     }
 
     private function sendVerificationCode(User $user, VerificationCodeType $type, string $content, string $subject): VerificationCode

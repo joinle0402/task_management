@@ -1,7 +1,7 @@
 import * as Yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -36,13 +36,14 @@ export default function Login() {
         defaultValues: { email: '', password: '' },
         resolver: yupResolver(schema),
     });
-
+    const navigate = useNavigate();
     const { mutate, isPending } = useMutation({
         mutationFn: async (formValues) => await http.post('/auth/login', formValues),
         onMutate: () => showLoading(),
         onSettled: () => hideLoading(),
-        onSuccess: ({ access_token }) => {
-            login(access_token);
+        onSuccess: ({ access_token, profile }) => {
+            login(access_token, profile);
+            navigate('/admin/dashboard');
         },
         onError: (error) => handleApiError(error, setError),
     });
@@ -55,7 +56,7 @@ export default function Login() {
                         Login
                     </Typography>
                     <Box component="form" onSubmit={handleSubmit(mutate)}>
-                        <InputField control={control} name="email" label="Email" />
+                        <InputField type="email" control={control} name="email" label="Email" />
                         <PasswordField control={control} name="password" label="Password" />
                         <Box mt={1}>
                             <Button type="submit" variant="contained" fullWidth loading={isPending} loadingPosition="start">

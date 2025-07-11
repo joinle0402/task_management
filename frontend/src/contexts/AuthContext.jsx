@@ -2,31 +2,48 @@ import { createContext, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import http from '../http.js';
 import { useNavigate } from 'react-router-dom';
-import { showError, showSuccess } from '../utilities/toast.jsx';
 
 export const AuthContext = createContext({});
 
 export function AuthProvider({ children }) {
+    const [accessToken, setAccessToken] = useState(localStorage.getItem('access_token'));
+    const [profileUser, setProfileUser] = useState(null);
     const queryClient = useQueryClient();
     const navigate = useNavigate();
-    const [accessToken, setAccessToken] = useState(localStorage.getItem('access_token'));
-    const isAuthenticated = !!accessToken;
-    const { data: user, isLoading } = useQuery({
+
+    const { isLoading } = useQuery({
         queryKey: ['profile'],
-        queryFn: () => http.get('/auth/profile'),
-        enabled: isAuthenticated,
+        queryFn: async () => {
+            const profileUser = await http.get('/auth/profile');
+            console.log(profileUser);
+            setProfileUser(profileUser);
+            return profileUser;
+        },
+        enabled: !!accessToken && !profileUser,
         staleTime: 5 * 60 * 1000,
     });
-    const isVerified = !!user?.email_verified_at;
+    const isAuthenticated = !!accessToken;
+    const isVerified = !!profileUser?.email_verified_at;
 
-    const login = async (accessToken) => {
+    const login = async (accessToken, profileUser) => {
         localStorage.setItem('access_token', accessToken);
         setAccessToken(accessToken);
-        await queryClient.invalidateQueries(['profile']);
+        setProfileUser(profileUser);
+        queryClient.setQueryData(['profile'], profileUser); // Optional: populate cache
+    };
+
+    const logout = () => {
+        localStorage.removeItem('access_token');
+        queryClient.removeQueries();
+        setAccessToken(null);
+        setProfileUser(null);
+        navigate('/login');
     };
 
     return (
-        <AuthContext.Provider value={{ accessToken, setAccessToken, isAuthenticated, isVerified, user, isLoading, login }}>
+        <AuthContext.Provider
+            value={{ accessToken, setAccessToken, setProfileUser, isAuthenticated, isVerified, profileUser, isLoading, login, logout }}
+        >
             {children}
         </AuthContext.Provider>
     );

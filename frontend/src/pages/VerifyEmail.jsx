@@ -32,14 +32,13 @@ export default function VerifyEmail() {
         resolver: yupResolver(schema),
     });
     const { isVerified } = use(AuthContext);
-    console.log(isVerified);
     useEffect(
         function () {
             if (isVerified) {
                 navigate('/admin/dashboard');
             }
         },
-        [isVerified],
+        [isVerified, navigate],
     );
 
     const { data: verificationStatus } = useQuery({

@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Requests\Auth\VerifyEmailRequest;
 use App\Models\RefreshToken;
+use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\VerificationCode;
 use App\Notifications\VerificationCodeNotification;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Laravel\Socialite\Facades\Socialite;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Throwable;
@@ -31,7 +33,7 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse|Response
     {
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->validated('email'))->first();
         if (!empty($user) && $user->hasVerifiedEmail()) {
             throw ValidationException::withMessages(['email' => 'This email is already registered!']);
         }
@@ -132,7 +134,7 @@ class AuthController extends Controller
 
     public function forgotPassword(EmailRequest $request): JsonResponse
     {
-        $user = User::whereEmail($request->email)->first();
+        $user = User::whereEmail($request->validated('email'))->first();
         if (empty($user)) return json_message('Password reset code sent to your email address.');
 
         $verificationCode = $this->sendVerificationCode($user, VerificationCodeType::PASSWORD_RESET, "Your password reset code is @otp", "Password reset code");
@@ -147,12 +149,13 @@ class AuthController extends Controller
 
     public function resendForgotPassword(EmailRequest $request): JsonResponse
     {
-        $user = User::whereEmail($request->email)->first();
+        $user = User::whereEmail($request->validated('email'))->first();
         if (empty($user)) return json_message('Password reset code resent to your email address.');
 
         abort_if(!RateLimiter::attempt("resend-otp:".$user->id, 1, fn() => true), Response::HTTP_TOO_MANY_REQUESTS, "Please wait before requesting another code.");
 
         $this->sendVerificationCode($user, VerificationCodeType::PASSWORD_RESET, "Your password reset code is @otp", "Password reset code");
+
         return response()->json([
             'message' => 'OTP resent successfully.',
             'data' => ['expired_at' => now()->addMinutes(10)],
@@ -161,7 +164,7 @@ class AuthController extends Controller
 
     public function verifyForgotPassword(VerifyEmailRequest $request): JsonResponse
     {
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->validated('email'))->first();
         abort_if(empty($user), Response::HTTP_NOT_FOUND, "Email is not exists!");
 
         $verificationCode = VerificationCode::where('user_id', $user->id)
@@ -181,19 +184,22 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @throws ValidationException
+     */
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        $userId = Cache::pull('forgot-password-token:'.$request->token);
+        $userId = Cache::pull('forgot-password-token:'.$request->validated('token'));
         abort_if(empty($userId), Response::HTTP_UNPROCESSABLE_ENTITY, "Invalid or expired token!");
 
         $user = User::find($userId);
         abort_if(empty($user), Response::HTTP_NOT_FOUND, "User not found!");
 
-        if (Hash::check($request->password, $user->password)) {
+        if (Hash::check($request->validated('password'), $user->password)) {
             throw ValidationException::withMessages(['password' => 'New password must be different from the current password.']);
         }
 
-        $user->update(['password' => $request->password]);
+        $user->update(['password' => $request->validated('password')]);
 
         return json_message('Password reset successfully.');
     }
@@ -205,8 +211,40 @@ class AuthController extends Controller
         return response()->json([
             'email' => $user->email,
             'isVerified' => $user->hasVerifiedEmail(),
-            'expiresAt' => optional($verification)->expired_at,
+            'expiresAt' => $verification?->expired_at,
         ]);
+    }
+
+    function redirectToProvider($provider): JsonResponse
+    {
+        abort_if(!in_array($provider, ['google', 'github']), Response::HTTP_BAD_REQUEST, "Invalid provider!");
+        return response()->json(['url' => Socialite::driver($provider)->stateless()->redirect()->getTargetUrl()]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function handleProviderCallback($provider): Response
+    {
+        $socialUser = Socialite::driver($provider)->stateless()->user();
+        $socialAccount = SocialAccount::where('provider', $provider)->where('provider_id', $socialUser->getId())->first();
+
+        return DB::transaction(function () use ($socialUser, $socialAccount, $provider) {
+            if (!empty($socialAccount)) {
+                $user = $socialAccount->user;
+            } else {
+                $user = User::firstOrCreate(
+                    ['email' => $socialUser->getEmail()],
+                    ['name' => $socialUser->getName(), 'password' => bcrypt(uniqid()), 'email_verified_at' => now()]
+                );
+                $user->socialAccounts()->create(['provider' => $provider, 'provider_id' => $socialUser->getId(),]);
+            }
+            $accessToken = $user->createToken('access_token', ['*'], now()->addMinutes(config('sanctum.expiration', 15)))->plainTextToken;
+            $refreshTokenPlain = str()->random(60);
+            RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', $refreshTokenPlain), 'expired_at' => now()->addDays(7)]);
+            return redirect(env('APP_FRONTEND_URL')."/auth/$provider/callback?token=$accessToken")
+                ->cookie('refresh_token', $refreshTokenPlain, 10080, '/', null, true, true, false, 'Strict');
+        });
     }
 
     private function buildAuthenticationResponse(string $message, User|BelongsTo $user): Response
@@ -214,7 +252,6 @@ class AuthController extends Controller
         $accessToken = $user->createToken('access_token', ['*'], now()->addMinutes(config('sanctum.expiration', 10)))->plainTextToken;
         $refreshTokenPlain = str()->random(60);
         RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', $refreshTokenPlain), 'expired_at' => now()->addDays(7)]);
-        cookie()->queue('refresh_token', $refreshTokenPlain, 10080, '/', null, true, true, false, 'Strict');
         return response([
             'message' => $message,
             'access_token' => $accessToken,
@@ -224,7 +261,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'email_verified_at' => $user->email_verified_at,
             ],
-        ]);
+        ])->cookie('refresh_token', $refreshTokenPlain, 10080, '/', null, true, true, false, 'Strict');
     }
 
     private function sendVerificationCode(User $user, VerificationCodeType $type, string $content, string $subject): VerificationCode

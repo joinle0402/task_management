@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import VerifyForgotPassword from './pages/VerifyForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
+import Callback from "./pages/Callback.jsx";
 
 export default function App() {
     return (
@@ -17,6 +18,7 @@ export default function App() {
             <Route path="/" element={<MainLayout />}>
                 <Route element={<PublicRoute />}>
                     <Route path="login" element={<Login />} />
+                    <Route path="/auth/:provider/callback" element={<Callback />} />
                     <Route path="register" element={<Register />} />
                     <Route path="forgot-password" element={<ForgotPassword />} />
                     <Route path="forgot-password/verify" element={<VerifyForgotPassword />} />

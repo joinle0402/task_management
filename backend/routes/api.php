@@ -11,6 +11,9 @@ Route::prefix('/v1')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
 
+        Route::get('/{provider}/redirect', [AuthController::class, 'redirectToProvider'])->middleware('throttle:10,1');
+        Route::get('/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
+
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
         Route::post('/forgot-password/resend', [AuthController::class, 'resendForgotPassword']);
         Route::post('/forgot-password/verify', [AuthController::class, 'verifyForgotPassword']);

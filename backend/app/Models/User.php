@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
@@ -17,7 +18,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property string $name
@@ -29,9 +30,11 @@ use Laravel\Sanctum\PersonalAccessToken;
  * @property Carbon|null $updated_at
  * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
+ * @property-read Collection<int, \App\Models\SocialAccount> $socialAccounts
+ * @property-read int|null $social_accounts_count
  * @property-read Collection<int, PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
- * @method static UserFactory factory($count = null, $state = [])
+ * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static Builder<static>|User newModelQuery()
  * @method static Builder<static>|User newQuery()
  * @method static Builder<static>|User query()
@@ -70,6 +73,11 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
 
     /**
      * Get the attributes that should be cast.

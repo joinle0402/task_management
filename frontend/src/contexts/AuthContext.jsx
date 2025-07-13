@@ -23,8 +23,6 @@ export function AuthProvider({ children }) {
     });
     const isAuthenticated = !!accessToken;
     const isVerified = !!profileUser?.email_verified_at;
-    console.log(accessToken, profileUser)
-    console.log(!!accessToken && !profileUser)
 
     const login = async (accessToken, profileUser) => {
         localStorage.setItem('access_token', accessToken);

@@ -39,10 +39,10 @@ export default function Register() {
     const navigate = useNavigate();
 
     const { mutate: onSubmit, isPending } = useMutation({
-        mutationFn: (formValues) => http.post('/auth/register', formValues),
-        onSuccess: (response) => {
-            toast.success(response.message);
-            localStorage.setItem('access_token', response.access_token);
+        mutationFn: async (formValues) => await http.post('/auth/register', formValues),
+        onSuccess: ({ message, access_token }) => {
+            toast.success(message);
+            localStorage.setItem('access_token', access_token);
             navigate('/verify-email');
         },
         onError: (error) => handleApiError(error, setError),

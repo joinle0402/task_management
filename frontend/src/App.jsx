@@ -5,12 +5,13 @@ import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
 import PublicRoute from './components/routes/PublicRoute.jsx';
 import ProtectedRoute from './components/routes/ProtectedRoute.jsx';
-import TaskList from './pages/TaskList.jsx';
+import TaskList from './pages/Task/TaskList.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import VerifyForgotPassword from './pages/VerifyForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
-import Callback from "./pages/Callback.jsx";
+import Callback from './pages/Callback.jsx';
+import DashboardLayout from './components/DashboardLayout.jsx';
 
 export default function App() {
     return (
@@ -27,8 +28,10 @@ export default function App() {
                 </Route>
                 <Route element={<ProtectedRoute />}>
                     <Route path="verify-email" element={<VerifyEmail />} />
-                    <Route path="/admin/dashboard" element={<Dashboard />} />
-                    <Route path="/admin/tasks" element={<TaskList />} />
+                    <Route path="admin" element={<DashboardLayout />}>
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="tasks" element={<TaskList />} />
+                    </Route>
                 </Route>
             </Route>
         </Routes>

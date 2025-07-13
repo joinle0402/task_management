@@ -30,7 +30,7 @@ export default function ResetPassword() {
         resolver: yupResolver(schema),
     });
     const { mutate: onSubmit, isPending } = useMutation({
-        mutationFn: (formValues) => http.post('/auth/reset-password', { ...formValues, email, token }),
+        mutationFn: async (formValues) => await http.post('/auth/reset-password', { ...formValues, email, token }),
         onSuccess: ({ message }) => {
             showSuccess(message);
             navigate('/login');

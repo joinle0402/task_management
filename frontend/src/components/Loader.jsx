@@ -1,7 +1,7 @@
 import { use } from 'react';
-import { LoaderContext } from '../contexts/LoaderContext.jsx';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
+import { LoaderContext } from '@/contexts/LoaderContext.jsx';
 
 export default function Loader() {
     const { loading } = use(LoaderContext);

@@ -11,14 +11,14 @@ import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import Link from '@mui/material/Link';
 
-import InputField from '../components/form-control/InputField';
-import PasswordField from '../components/form-control/PasswordField';
+import InputField from '@/components/form-control/InputField';
+import PasswordField from '@/components/form-control/PasswordField';
 import { useMutation } from '@tanstack/react-query';
-import http from '../http.js';
-import { handleApiError } from '../utilities/response.js';
-import {use, useState} from 'react';
-import { AuthContext } from '../contexts/AuthContext.jsx';
-import { LoaderContext } from '../contexts/LoaderContext.jsx';
+import http from '@/http.js';
+import { handleApiError } from '@/utilities/response.js';
+import { use, useState } from 'react';
+import { AuthContext } from '@/contexts/AuthContext.jsx';
+import { LoaderContext } from '@/contexts/LoaderContext.jsx';
 
 const schema = Yup.object().shape({
     email: Yup.string().required('Email is required').email('Invalid email format'),
@@ -46,7 +46,7 @@ export default function Login() {
     const [provider, setProvider] = useState('');
     const { mutate: socialLogin, isPending: socialLoginLoading } = useMutation({
         mutationFn: async (provider = '') => await http.get(`/auth/${provider}/redirect`),
-        onSuccess: (data) => window.location.href = data.url,
+        onSuccess: (data) => (window.location.href = data.url),
         onError: (error) => handleApiError(error),
     });
 
@@ -73,10 +73,30 @@ export default function Login() {
                     </Box>
                     <Divider sx={{ my: 1 }}>or sign in with</Divider>
                     <Stack direction="row" justifyContent="center" gap={1}>
-                        <Button fullWidth variant="contained" color="primary" onClick={() => { setProvider('google'); socialLogin('google'); }} loading={socialLoginLoading && provider === 'google'} loadingPosition="start">
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            onClick={() => {
+                                setProvider('google');
+                                socialLogin('google');
+                            }}
+                            loading={socialLoginLoading && provider === 'google'}
+                            loadingPosition="start"
+                        >
                             Google
                         </Button>
-                        <Button fullWidth variant="contained" color="secondary" onClick={() => { setProvider('github'); socialLogin('github'); }} loading={socialLoginLoading && provider === 'github'} loadingPosition="start">
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            color="secondary"
+                            onClick={() => {
+                                setProvider('github');
+                                socialLogin('github');
+                            }}
+                            loading={socialLoginLoading && provider === 'github'}
+                            loadingPosition="start"
+                        >
                             Github
                         </Button>
                     </Stack>

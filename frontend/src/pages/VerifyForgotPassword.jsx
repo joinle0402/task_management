@@ -9,14 +9,14 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
-import OtpField from '../components/form-control/OtpField';
+import OtpField from '@/components/form-control/OtpField';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useCountdown } from '../hooks/useCountdown';
-import { handleApiError } from '../utilities/response';
-import { showSuccess } from '../utilities/toast';
-import { useCooldown } from '../hooks/useCooldown';
+import { useCountdown } from '@/hooks/useCountdown';
+import { handleApiError } from '@/utilities/response';
+import { showSuccess } from '@/utilities/toast';
+import { useCooldown } from '@/hooks/useCooldown';
 import { useState } from 'react';
-import http from '../http';
+import http from '@/http';
 
 const schema = Yup.object().shape({
     otp: Yup.string().required('OTP is required').length(6, 'OTP must be 6 digits'),

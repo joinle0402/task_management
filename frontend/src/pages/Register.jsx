@@ -15,12 +15,12 @@ import GoogleIcon from '@mui/icons-material/Google';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
-import InputField from '../components/form-control/InputField';
-import PasswordField from '../components/form-control/PasswordField';
+import InputField from '@/components/form-control/InputField';
+import PasswordField from '@/components/form-control/PasswordField';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import http from '../http.js';
-import { handleApiError } from '../utilities/response.js';
+import http from '@/http.js';
+import { handleApiError } from '@/utilities/response.js';
 
 const schema = Yup.object().shape({
     name: Yup.string().required('Name is required'),

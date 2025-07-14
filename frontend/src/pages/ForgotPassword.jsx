@@ -1,19 +1,18 @@
 import * as Yup from 'yup';
-import { use } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { handleApiError } from '../utilities/response.js';
+import { handleApiError } from '@/utilities/response.js';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
-import http from '../http.js';
-import InputField from '../components/form-control/InputField';
-import { showSuccess } from '../utilities/toast.jsx';
+import http from '@/http.js';
+import InputField from '@/components/form-control/InputField';
+import { showSuccess } from '@/utilities/toast.jsx';
 
 const schema = Yup.object().shape({
     email: Yup.string().required('Email is required').email('Invalid email format'),

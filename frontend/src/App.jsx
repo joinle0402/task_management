@@ -1,17 +1,17 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import MainLayout from './components/MainLayout';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import VerifyEmail from './pages/VerifyEmail';
-import PublicRoute from './components/routes/PublicRoute.jsx';
-import ProtectedRoute from './components/routes/ProtectedRoute.jsx';
-import TaskList from './pages/Task/TaskList.jsx';
-import Dashboard from './pages/Dashboard.jsx';
-import ForgotPassword from './pages/ForgotPassword.jsx';
-import VerifyForgotPassword from './pages/VerifyForgotPassword.jsx';
-import ResetPassword from './pages/ResetPassword.jsx';
-import Callback from './pages/Callback.jsx';
-import DashboardLayout from './components/DashboardLayout.jsx';
+import MainLayout from '@/components/MainLayout';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import VerifyEmail from '@/pages/VerifyEmail';
+import PublicRoute from '@/components/routes/PublicRoute.jsx';
+import ProtectedRoute from '@/components/routes/ProtectedRoute.jsx';
+import TaskList from '@/pages/Task/TaskList.jsx';
+import Dashboard from '@/pages/Dashboard.jsx';
+import ForgotPassword from '@/pages/ForgotPassword.jsx';
+import VerifyForgotPassword from '@/pages/VerifyForgotPassword.jsx';
+import ResetPassword from '@/pages/ResetPassword.jsx';
+import Callback from '@/pages/Callback.jsx';
+import DashboardLayout from '@/components/DashboardLayout.jsx';
 
 export default function App() {
     return (

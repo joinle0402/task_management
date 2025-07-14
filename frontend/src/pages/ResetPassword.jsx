@@ -9,10 +9,10 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
-import { handleApiError } from '../utilities/response';
-import { showSuccess } from '../utilities/toast';
-import PasswordField from '../components/form-control/PasswordField';
-import http from '../http';
+import { handleApiError } from '@/utilities/response';
+import { showSuccess } from '@/utilities/toast';
+import PasswordField from '@/components/form-control/PasswordField';
+import http from '@/http';
 
 const schema = Yup.object().shape({
     password: Yup.string().required('Password is required').min(4, 'Password must be at least 4 characters'),

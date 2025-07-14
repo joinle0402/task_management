@@ -1,13 +1,13 @@
 import { use } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext.jsx';
+import { AuthContext } from '@/contexts/AuthContext.jsx';
 import { Drawer, Avatar, ListItemButton, Toolbar, Box, Typography, Divider, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useLogout } from '../hooks/useLogout.js';
+import { useLogout } from '@/hooks/useLogout.js';
 
 export default function Sidebar() {
     const navigate = useNavigate();

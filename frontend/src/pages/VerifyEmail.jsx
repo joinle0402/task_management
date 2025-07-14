@@ -10,16 +10,16 @@ import Divider from '@mui/material/Divider';
 import Link from '@mui/material/Link';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import OtpField from '../components/form-control/OtpField';
+import OtpField from '@/components/form-control/OtpField';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import http from '../http.js';
-import { useCountdown } from '../hooks/useCountdown.js';
-import { handleApiError } from '../utilities/response.js';
-import { useCooldown } from '../hooks/useCooldown.js';
-import { showSuccess } from '../utilities/toast.jsx';
+import http from '@/http.js';
+import { useCountdown } from '@/hooks/useCountdown.js';
+import { handleApiError } from '@/utilities/response.js';
+import { useCooldown } from '@/hooks/useCooldown.js';
+import { showSuccess } from '@/utilities/toast.jsx';
 import { use, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext.jsx';
+import { AuthContext } from '@/contexts/AuthContext.jsx';
 
 const schema = Yup.object().shape({
     otp: Yup.string().required('OTP is required!').length(6, 'OTP must be 6 digits!'),

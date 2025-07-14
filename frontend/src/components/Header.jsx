@@ -9,7 +9,7 @@ export default function Header() {
     return (
         <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
             <Toolbar>
-                <Container maxWidth="xl">
+                <Container maxWidth={false}>
                     <Stack direction="row" justifyContent="space-between" gap={1} width="100%">
                         <Typography
                             variant="h6"

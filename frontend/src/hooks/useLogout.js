@@ -1,8 +1,8 @@
-import http from '../http.js';
+import http from '@/http.js';
 import { useMutation } from '@tanstack/react-query';
-import { showSuccess } from '../utilities/toast.jsx';
-import { AuthContext } from '../contexts/AuthContext.jsx';
-import { LoaderContext } from '../contexts/LoaderContext.jsx';
+import { showSuccess } from '@/utilities/toast.jsx';
+import { AuthContext } from '@/contexts/AuthContext.jsx';
+import { LoaderContext } from '@/contexts/LoaderContext.jsx';
 import { use } from 'react';
 
 export function useLogout() {

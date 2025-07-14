@@ -1,6 +1,6 @@
 import { createContext, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import http from '../http.js';
+import http from '@/http.js';
 import { useNavigate } from 'react-router-dom';
 
 export const AuthContext = createContext({});

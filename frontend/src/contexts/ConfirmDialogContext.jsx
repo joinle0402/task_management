@@ -11,7 +11,7 @@ export const ConfirmDialogProvider = ({ children }) => {
         onConfirm: null,
     });
 
-    const confirm = ({ title, message }) => {
+    const confirm = async ({ title, message }) => {
         return new Promise((resolve) => {
             setDialogOptions({
                 open: true,

@@ -15,8 +15,15 @@ import NotFound from '@/pages/Common/NotFound';
 import Dashboard from '@/pages/Dashboard.jsx';
 import UserList from '@/pages/User/UserList';
 import UserForm from '@/pages/User/UserForm';
+import { use } from 'react';
+import { AuthContext } from './contexts/AuthContext';
+import Loader from './components/Loader';
 
 export default function App() {
+    const { isLoading } = use(AuthContext);
+    if (isLoading) {
+        return <Loader isLoading={isLoading} />;
+    }
     return (
         <Routes>
             <Route path="/" element={<MainLayout />}>

@@ -20,6 +20,7 @@ export function AuthProvider({ children }) {
         },
         enabled: !!accessToken && !profileUser,
         staleTime: 5 * 60 * 1000,
+        retry: false,
     });
     const isAuthenticated = !!accessToken;
     const isVerified = !!profileUser?.email_verified_at;

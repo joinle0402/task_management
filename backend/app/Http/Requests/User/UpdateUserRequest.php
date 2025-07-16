@@ -25,6 +25,7 @@ class UpdateUserRequest extends FormRequest
             'name' => 'sometimes|required|string|max:255',
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($this->user->id)],
             'password' => 'sometimes|nullable|string|min:4|confirmed',
+            'phone' => 'sometimes|nullable|string|digits:10',
         ];
     }
 }

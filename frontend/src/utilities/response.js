@@ -1,6 +1,7 @@
 import { showError } from './toast';
 
 export function handleApiError(error, setError = null) {
+    console.log(error)
     const statusCode = error.response?.status;
     if (statusCode === 422 && typeof setError === 'function') {
         if (!!error.response.data.errors) {

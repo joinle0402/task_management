@@ -1,5 +1,5 @@
 import { use } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     Table,
     TableHead,
@@ -17,26 +17,36 @@ import {
 } from '@mui/material';
 
 import DeleteIcon from '@mui/icons-material/Delete';
-import { fetchUsers } from '@/api/userApi';
+import { deleteUser, fetchUsers } from '@/api/userApi';
 import { ConfirmDialogContext } from '@/contexts/ConfirmDialogContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { handleApiError } from '@/utilities/response';
+import { LoaderContext } from '@/contexts/LoaderContext';
 
 export default function UserList() {
     const location = useLocation();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { confirm } = use(ConfirmDialogContext);
+    const { showLoading, hideLoading } = use(LoaderContext);
     const { data: users, isLoading: isUserLoading } = useQuery({
         queryKey: ['users'],
         queryFn: fetchUsers,
     });
 
-    function handleButtonDeleteClicked(user) {
-        confirm({
-            title: 'Delete User',
-            message: `Are you sure you want to delete "${user.name}"?`,
-            onConfirm: () => {},
-        });
+    const deleteMutation = useMutation({
+        mutationFn: deleteUser,
+        onSuccess: () => queryClient.invalidateQueries(['users']),
+        onMutate: () => showLoading(),
+        onSettled: () => hideLoading(),
+        onError: (error) => handleApiError(error),
+    });
+
+    async function handleButtonDeleteClicked(user) {
+        if (await confirm({ title: 'Delete User', message: `Are you sure you want to delete "${user.name}"?` })) {
+            deleteMutation.mutate(user.id);
+        }
     }
 
     return (
@@ -58,6 +68,7 @@ export default function UserList() {
                                 <TableCell sx={{ width: 150, minWidth: 150 }}>STT</TableCell>
                                 <TableCell sx={{ width: 150, minWidth: 150 }}>Name</TableCell>
                                 <TableCell sx={{ width: 150, minWidth: 150 }}>Email</TableCell>
+                                <TableCell sx={{ width: 150, minWidth: 150 }}>Phone</TableCell>
                                 <TableCell sx={{ width: 150, minWidth: 150 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
@@ -77,6 +88,9 @@ export default function UserList() {
                                           <TableCell>
                                               <Skeleton sx={{ width: 150, minWidth: 150 }} />
                                           </TableCell>
+                                          <TableCell>
+                                              <Skeleton sx={{ width: 150, minWidth: 150 }} />
+                                          </TableCell>
                                       </TableRow>
                                   ))
                                 : users?.data?.map((user, index) => (
@@ -84,6 +98,7 @@ export default function UserList() {
                                           <TableCell>{index + 1}</TableCell>
                                           <TableCell>{user.name}</TableCell>
                                           <TableCell>{user.email}</TableCell>
+                                          <TableCell>{user.phone}</TableCell>
                                           <TableCell>
                                               <IconButton onClick={() => handleButtonDeleteClicked(user)}>
                                                   <DeleteIcon />

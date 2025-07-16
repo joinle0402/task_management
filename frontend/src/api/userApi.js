@@ -19,5 +19,6 @@ export const updateUser = async ({ id, ...payload }) => {
 }
 
 export const deleteUser = async (id) => {
+    console.log(`deleteUser: ${prefix}/${id}`)
     return await http.delete(`${prefix}/${id}`);
 }

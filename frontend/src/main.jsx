@@ -9,6 +9,7 @@ import { AuthProvider } from '@/contexts/AuthContext.jsx';
 import { LoaderProvider } from '@/contexts/LoaderContext.jsx';
 import Loader from '@/components/Loader.jsx';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { ConfirmDialogProvider } from '@/contexts/ConfirmDialogContext';
 
 const queryClient = new QueryClient();
 
@@ -19,9 +20,11 @@ createRoot(document.getElementById('root')).render(
             <QueryClientProvider client={queryClient}>
                 <LoaderProvider>
                     <AuthProvider>
-                        <Loader />
-                        <App />
-                        <ReactQueryDevtools initialIsOpen={false} />
+                        <ConfirmDialogProvider>
+                            <Loader />
+                            <App />
+                            <ReactQueryDevtools initialIsOpen={false} />
+                        </ConfirmDialogProvider>
                     </AuthProvider>
                 </LoaderProvider>
                 <Toaster

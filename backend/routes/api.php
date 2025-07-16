@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 
 Route::prefix('/v1')->group(function () {
     Route::prefix('/auth')->group(function () {
@@ -27,6 +28,9 @@ Route::prefix('/v1')->group(function () {
         Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
         });
+    });
+    Route::middleware(['auth:sanctum', 'verified'])->group(function() {
+        Route::apiResource('users', UserController::class);
     });
 });
 

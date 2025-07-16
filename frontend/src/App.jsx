@@ -1,17 +1,20 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '@/components/MainLayout';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import VerifyEmail from '@/pages/VerifyEmail';
+import DashboardLayout from '@/components/DashboardLayout.jsx';
 import PublicRoute from '@/components/routes/PublicRoute.jsx';
 import ProtectedRoute from '@/components/routes/ProtectedRoute.jsx';
+import Login from '@/pages/Auth/Login';
+import Register from '@/pages/Auth/Register';
+import VerifyEmail from '@/pages/Auth/VerifyEmail';
+import ForgotPassword from '@/pages/Auth/ForgotPassword.jsx';
+import VerifyForgotPassword from '@/pages/Auth/VerifyForgotPassword.jsx';
+import ResetPassword from '@/pages/Auth/ResetPassword.jsx';
+import Callback from '@/pages/Auth/Callback.jsx';
 import TaskList from '@/pages/Task/TaskList.jsx';
+import NotFound from '@/pages/Common/NotFound';
 import Dashboard from '@/pages/Dashboard.jsx';
-import ForgotPassword from '@/pages/ForgotPassword.jsx';
-import VerifyForgotPassword from '@/pages/VerifyForgotPassword.jsx';
-import ResetPassword from '@/pages/ResetPassword.jsx';
-import Callback from '@/pages/Callback.jsx';
-import DashboardLayout from '@/components/DashboardLayout.jsx';
+import UserList from '@/pages/User/UserList';
+import UserForm from '@/pages/User/UserForm';
 
 export default function App() {
     return (
@@ -31,8 +34,11 @@ export default function App() {
                     <Route path="admin" element={<DashboardLayout />}>
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="tasks" element={<TaskList />} />
+                        <Route path="users" element={<UserList />} />
+                        <Route path="users/create" element={<UserForm />} />
                     </Route>
                 </Route>
+                <Route path="*" element={<NotFound />} />
             </Route>
         </Routes>
     );

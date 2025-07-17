@@ -14,10 +14,11 @@ import TaskList from '@/pages/Task/TaskList.jsx';
 import NotFound from '@/pages/Common/NotFound';
 import Dashboard from '@/pages/Dashboard.jsx';
 import UserList from '@/pages/User/UserList';
-import UserForm from '@/pages/User/UserForm';
 import { use } from 'react';
 import { AuthContext } from './contexts/AuthContext';
 import Loader from './components/Loader';
+import CreateUser from '@/pages/User/CreateUser.jsx';
+import UpdateUser from '@/pages/User/UpdateUser.jsx';
 
 export default function App() {
     const { isLoading } = use(AuthContext);
@@ -42,7 +43,8 @@ export default function App() {
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="tasks" element={<TaskList />} />
                         <Route path="users" element={<UserList />} />
-                        <Route path="users/create" element={<UserForm />} />
+                        <Route path="users/create" element={<CreateUser />} />
+                        <Route path="users/:id/edit" element={<UpdateUser />} />
                     </Route>
                 </Route>
                 <Route path="*" element={<NotFound />} />

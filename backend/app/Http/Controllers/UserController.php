@@ -2,41 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\User\StoreUserRequest;
+use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response as Status;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(): AnonymousResourceCollection
     {
         return UserResource::collection(User::paginate(15));
     }
 
-    public function store(StoreUserRequest $request)
+    public function store(StoreUserRequest $request): UserResource
     {
         return new UserResource(User::create($request->validated()));
     }
 
-    public function show(User $user)
+    public function show(User $user): UserResource
     {
         return new UserResource($user);
     }
 
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user): UserResource
     {
         $user->update([
-            'name' => $validated['name'] ?? $user->name,
-            'email' => $validated['email'] ?? $user->email,
-            'password' => $validated['password'] ?? $user->password,
+            'name' => $request->validated('name') ?? $user->name,
+            'email' => $request->validated('email') ?? $user->email,
+            'password' => $request->validated('password') ?? $user->password,
         ]);
         return new UserResource($user);
     }
 
-    public function destroy(User $user)
+    public function destroy(User $user): Response
     {
+        abort_if(auth()->id() === $user->id, Status::HTTP_FORBIDDEN, 'You cannot delete your own account.');
         $user->delete();
         return response()->noContent();
     }

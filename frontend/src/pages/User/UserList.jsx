@@ -23,11 +23,16 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { handleApiError } from '@/utilities/response';
 import { LoaderContext } from '@/contexts/LoaderContext';
+import { AuthContext } from "@/contexts/AuthContext.jsx";
+import {showError} from "@/utilities/toast.jsx";
+import {formatDate} from "@/utilities/date.js";
+import ModeEditOutlinedIcon from '@mui/icons-material/ModeEditOutlined';
 
 export default function UserList() {
     const location = useLocation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { profileUser } = use(AuthContext);
     const { confirm } = use(ConfirmDialogContext);
     const { showLoading, hideLoading } = use(LoaderContext);
     const { data: users, isLoading: isUserLoading } = useQuery({
@@ -44,6 +49,10 @@ export default function UserList() {
     });
 
     async function handleButtonDeleteClicked(user) {
+        if (profileUser.id === user.id) {
+            showError("You cannot delete your own account");
+            return;
+        }
         if (await confirm({ title: 'Delete User', message: `Are you sure you want to delete "${user.name}"?` })) {
             deleteMutation.mutate(user.id);
         }
@@ -69,6 +78,7 @@ export default function UserList() {
                                 <TableCell sx={{ width: 150, minWidth: 150 }}>Name</TableCell>
                                 <TableCell sx={{ width: 150, minWidth: 150 }}>Email</TableCell>
                                 <TableCell sx={{ width: 150, minWidth: 150 }}>Phone</TableCell>
+                                <TableCell sx={{ width: 150, minWidth: 150 }}>Created At</TableCell>
                                 <TableCell sx={{ width: 150, minWidth: 150 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
@@ -76,6 +86,9 @@ export default function UserList() {
                             {isUserLoading
                                 ? Array.from({ length: 5 }).map((_, index) => (
                                       <TableRow key={index}>
+                                          <TableCell>
+                                              <Skeleton sx={{ width: 150, minWidth: 150 }} />
+                                          </TableCell>
                                           <TableCell>
                                               <Skeleton sx={{ width: 150, minWidth: 150 }} />
                                           </TableCell>
@@ -99,9 +112,13 @@ export default function UserList() {
                                           <TableCell>{user.name}</TableCell>
                                           <TableCell>{user.email}</TableCell>
                                           <TableCell>{user.phone}</TableCell>
+                                          <TableCell>{formatDate(user.created_at)}</TableCell>
                                           <TableCell>
-                                              <IconButton onClick={() => handleButtonDeleteClicked(user)}>
+                                              <IconButton onClick={() => handleButtonDeleteClicked(user)} color="error">
                                                   <DeleteIcon />
+                                              </IconButton>
+                                              <IconButton onClick={() => navigate(location.pathname + `/${user.id}/edit`)} color="warning">
+                                                  <ModeEditOutlinedIcon />
                                               </IconButton>
                                           </TableCell>
                                       </TableRow>

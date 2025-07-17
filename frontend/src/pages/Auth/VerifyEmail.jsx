@@ -31,7 +31,7 @@ export default function VerifyEmail() {
         defaultValues: { otp: '' },
         resolver: yupResolver(schema),
     });
-    const { isVerified } = use(AuthContext);
+    const { isVerified, profileUser } = use(AuthContext);
     useEffect(
         function () {
             if (isVerified) {
@@ -52,19 +52,13 @@ export default function VerifyEmail() {
             return responseData;
         },
         staleTime: 0,
-        retry: false,
-        enabled: !!isVerified,
     });
     const [expiresAt, setExpiresAt] = useState();
     const { expired, formatted } = useCountdown(expiresAt);
     const { startCooldown, cooldown, cooldownActive } = useCooldown('resendCooldown', 60_000);
 
     const { mutate: resendVerificationCode, isPending: isResendLoading } = useMutation({
-        mutationFn: () => {
-            if (verificationStatus?.email) {
-                return http.post('/auth/verify-email/resend', { email: verificationStatus?.email });
-            }
-        },
+        mutationFn: async () => await http.post('/auth/verify-email/resend', { email: profileUser.email }),
         onSuccess: (response) => {
             showSuccess(response.message);
             startCooldown();

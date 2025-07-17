@@ -7,7 +7,7 @@ export default function DashboardLayout() {
     return (
         <Stack direction="row" gap={1}>
             <Sidebar />
-            <Box mt={8} width="100%">
+            <Box width="100%">
                 <Outlet />
             </Box>
         </Stack>

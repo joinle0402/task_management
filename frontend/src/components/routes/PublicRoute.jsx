@@ -5,7 +5,6 @@ import Loader from '@/components/Loader.jsx';
 
 export default function PublicRoute() {
     const { isAuthenticated, isVerified, isLoading } = use(AuthContext);
-    console.log('PublicRoute', { isLoading });
     if (isLoading) return <Loader isLoading={isLoading} />;
     if (!isAuthenticated) return <Outlet />; // Not logged in → allow
     if (!isVerified) return <Navigate to="/verify-email" replace />; // Logged in but unverified → redirect to verify

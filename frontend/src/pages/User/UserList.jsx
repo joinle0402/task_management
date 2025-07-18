@@ -23,10 +23,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { handleApiError } from '@/utilities/response';
 import { LoaderContext } from '@/contexts/LoaderContext';
-import { AuthContext } from "@/contexts/AuthContext.jsx";
-import {showError} from "@/utilities/toast.jsx";
-import {formatDate} from "@/utilities/date.js";
+import { AuthContext } from '@/contexts/AuthContext.jsx';
+import { showError } from '@/utilities/toast.jsx';
+import { formatDate } from '@/utilities/date.js';
 import ModeEditOutlinedIcon from '@mui/icons-material/ModeEditOutlined';
+import { exportFile } from '@/utilities/downloadFile.js';
 
 export default function UserList() {
     const location = useLocation();
@@ -50,7 +51,7 @@ export default function UserList() {
 
     async function handleButtonDeleteClicked(user) {
         if (profileUser.id === user.id) {
-            showError("You cannot delete your own account");
+            showError('You cannot delete your own account');
             return;
         }
         if (await confirm({ title: 'Delete User', message: `Are you sure you want to delete "${user.name}"?` })) {
@@ -63,9 +64,12 @@ export default function UserList() {
             <Breadcrumbs />
             <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
                 <Typography variant="h5">User Management</Typography>
-                <Stack>
+                <Stack direction="row" gap={1}>
                     <Button variant="contained" onClick={() => navigate(location.pathname + '/create')}>
                         Create
+                    </Button>
+                    <Button variant="contained" onClick={() => exportFile('/users/export', 'users.xlsx')}>
+                        Export
                     </Button>
                 </Stack>
             </Stack>

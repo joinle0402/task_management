@@ -30,6 +30,7 @@ Route::prefix('/v1')->group(function () {
         });
     });
     Route::middleware(['auth:sanctum', 'verified'])->group(function() {
+        Route::get('/users/export', [UserController::class, 'export']);
         Route::apiResource('users', UserController::class);
     });
 });

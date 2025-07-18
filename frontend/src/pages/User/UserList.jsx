@@ -1,21 +1,6 @@
-import { use } from 'react';
+import { use, useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-    Table,
-    TableHead,
-    TableRow,
-    TableCell,
-    TableBody,
-    Button,
-    IconButton,
-    TableContainer,
-    Paper,
-    Skeleton,
-    Box,
-    Typography,
-    Stack,
-} from '@mui/material';
-
+import { Box, Button, IconButton, LinearProgress, Stack, Switch, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteUser, fetchUsers } from '@/api/userApi';
 import { ConfirmDialogContext } from '@/contexts/ConfirmDialogContext';
@@ -25,9 +10,10 @@ import { handleApiError } from '@/utilities/response';
 import { LoaderContext } from '@/contexts/LoaderContext';
 import { AuthContext } from '@/contexts/AuthContext.jsx';
 import { showError } from '@/utilities/toast.jsx';
-import { formatDate } from '@/utilities/date.js';
 import ModeEditOutlinedIcon from '@mui/icons-material/ModeEditOutlined';
 import { exportFile } from '@/utilities/downloadFile.js';
+import { DataGrid } from '@mui/x-data-grid';
+import dayjs from 'dayjs';
 
 export default function UserList() {
     const location = useLocation();
@@ -36,18 +22,80 @@ export default function UserList() {
     const { profileUser } = use(AuthContext);
     const { confirm } = use(ConfirmDialogContext);
     const { showLoading, hideLoading } = use(LoaderContext);
-    const { data: users, isLoading: isUserLoading } = useQuery({
-        queryKey: ['users'],
-        queryFn: fetchUsers,
+
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+    const [sortModel, setSortModel] = useState([]);
+    const sort = useMemo(() => sortModel.map((s) => `${s.field}:${s.sort}`).join(','), [sortModel]);
+    const { page, pageSize } = paginationModel;
+    const { data: paginate, isFetching } = useQuery({
+        queryKey: ['users', page, pageSize, sort],
+        queryFn: () => fetchUsers({ page: page + 1, pageSize, sort }),
+        keepPreviousData: true,
+        staleTime: 1000,
     });
 
-    const deleteMutation = useMutation({
+    const handlePaginationChange = useCallback((model) => {
+        setPaginationModel((prev) => (prev.page !== model.page || prev.pageSize !== model.pageSize ? model : prev));
+    }, []);
+
+    const handleSortChange = useCallback((model) => {
+        setSortModel((prev) => (JSON.stringify(prev) !== JSON.stringify(model) ? model : prev));
+    }, []);
+
+    const { mutate: remove } = useMutation({
         mutationFn: deleteUser,
-        onSuccess: () => queryClient.invalidateQueries(['users']),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'], exact: falsecolumns }),
         onMutate: () => showLoading(),
         onSettled: () => hideLoading(),
         onError: (error) => handleApiError(error),
     });
+
+    const columns = useMemo(
+        () => [
+            {
+                field: 'index',
+                headerName: '#',
+                width: 70,
+                sortable: false,
+            },
+            { field: 'name', headerName: 'Name', flex: 1 },
+            { field: 'email', headerName: 'Email', flex: 1 },
+            { field: 'phone', headerName: 'Phone', flex: 1 },
+            { field: 'created_at', headerName: 'Created At', valueFormatter: (params) => dayjs(params.value).format('DD/MM/YYYY'), flex: 1 },
+            {
+                field: 'is_active',
+                headerName: 'Active',
+                width: 100,
+                renderCell: (params) => <Switch checked={params.value} color="primary" />,
+            },
+            {
+                field: 'actions',
+                headerName: 'Actions',
+                width: 120,
+                sortable: false,
+                renderCell: ({ row }) => (
+                    <Stack direction="row" gap={1}>
+                        <IconButton color="error" onClick={() => handleButtonDeleteClicked(row)}>
+                            <DeleteIcon />
+                        </IconButton>
+                        <IconButton color="warning" onClick={() => handleButtonUpdateClicked(row.id)}>
+                            <ModeEditOutlinedIcon />
+                        </IconButton>
+                    </Stack>
+                ),
+            },
+        ],
+        [],
+    );
+
+    const rows = useMemo(() => {
+        return (
+            paginate?.data?.map((item, i) => ({
+                ...item,
+                index: paginationModel.page * paginationModel.pageSize + i + 1,
+            })) ?? []
+        );
+    }, [paginate, paginationModel]);
 
     async function handleButtonDeleteClicked(user) {
         if (profileUser.id === user.id) {
@@ -55,8 +103,12 @@ export default function UserList() {
             return;
         }
         if (await confirm({ title: 'Delete User', message: `Are you sure you want to delete "${user.name}"?` })) {
-            deleteMutation.mutate(user.id);
+            remove(user.id);
         }
+    }
+
+    function handleButtonUpdateClicked(rowId) {
+        navigate(location.pathname + `/${rowId}/edit`);
     }
 
     return (
@@ -65,71 +117,31 @@ export default function UserList() {
             <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
                 <Typography variant="h5">User Management</Typography>
                 <Stack direction="row" gap={1}>
-                    <Button variant="contained" onClick={() => navigate(location.pathname + '/create')}>
-                        Create
-                    </Button>
                     <Button variant="contained" onClick={() => exportFile('/users/export', 'users.xlsx')}>
                         Export
+                    </Button>
+                    <Button variant="contained" onClick={() => navigate(location.pathname + '/create')}>
+                        Create
                     </Button>
                 </Stack>
             </Stack>
             <Box mt={1}>
-                <TableContainer component={Paper}>
-                    <Table size="small">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell sx={{ width: 150, minWidth: 150 }}>STT</TableCell>
-                                <TableCell sx={{ width: 150, minWidth: 150 }}>Name</TableCell>
-                                <TableCell sx={{ width: 150, minWidth: 150 }}>Email</TableCell>
-                                <TableCell sx={{ width: 150, minWidth: 150 }}>Phone</TableCell>
-                                <TableCell sx={{ width: 150, minWidth: 150 }}>Created At</TableCell>
-                                <TableCell sx={{ width: 150, minWidth: 150 }}>Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {isUserLoading
-                                ? Array.from({ length: 5 }).map((_, index) => (
-                                      <TableRow key={index}>
-                                          <TableCell>
-                                              <Skeleton sx={{ width: 150, minWidth: 150 }} />
-                                          </TableCell>
-                                          <TableCell>
-                                              <Skeleton sx={{ width: 150, minWidth: 150 }} />
-                                          </TableCell>
-                                          <TableCell>
-                                              <Skeleton sx={{ width: 150, minWidth: 150 }} />
-                                          </TableCell>
-                                          <TableCell>
-                                              <Skeleton sx={{ width: 150, minWidth: 150 }} />
-                                          </TableCell>
-                                          <TableCell>
-                                              <Skeleton sx={{ width: 150, minWidth: 150 }} />
-                                          </TableCell>
-                                          <TableCell>
-                                              <Skeleton sx={{ width: 150, minWidth: 150 }} />
-                                          </TableCell>
-                                      </TableRow>
-                                  ))
-                                : users?.data?.map((user, index) => (
-                                      <TableRow key={user.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                                          <TableCell>{index + 1}</TableCell>
-                                          <TableCell>{user.name}</TableCell>
-                                          <TableCell>{user.email}</TableCell>
-                                          <TableCell>{user.phone}</TableCell>
-                                          <TableCell>{formatDate(user.created_at)}</TableCell>
-                                          <TableCell>
-                                              <IconButton onClick={() => handleButtonDeleteClicked(user)} color="error">
-                                                  <DeleteIcon />
-                                              </IconButton>
-                                              <IconButton onClick={() => navigate(location.pathname + `/${user.id}/edit`)} color="warning">
-                                                  <ModeEditOutlinedIcon />
-                                              </IconButton>
-                                          </TableCell>
-                                      </TableRow>
-                                  ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                <DataGrid
+                    checkboxSelection
+                    rows={rows}
+                    columns={columns}
+                    rowCount={paginate?.meta?.total ?? 0}
+                    paginationMode="server"
+                    sortingMode="server"
+                    paginationModel={paginationModel}
+                    onPaginationModelChange={handlePaginationChange}
+                    sortModel={sortModel}
+                    onSortModelChange={handleSortChange}
+                    disableMultipleColumnsSorting={false}
+                    loading={isFetching && !paginate}
+                    pageSizeOptions={[5, 10, 20]}
+                    slots={{ loadingOverlay: LinearProgress }}
+                />
             </Box>
         </Box>
     );

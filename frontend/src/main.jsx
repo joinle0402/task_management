@@ -1,4 +1,4 @@
-import { StrictMode, Suspense } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from '@/App.jsx';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -8,7 +8,6 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext.jsx';
 import { LoaderProvider } from '@/contexts/LoaderContext.jsx';
 import Loader from '@/components/Loader.jsx';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ConfirmDialogProvider } from '@/contexts/ConfirmDialogContext';
 
 const queryClient = new QueryClient();
@@ -23,7 +22,6 @@ createRoot(document.getElementById('root')).render(
                         <ConfirmDialogProvider>
                             <Loader />
                             <App />
-                            <ReactQueryDevtools initialIsOpen={false} />
                             <Toaster
                                 position="top-right"
                                 toastOptions={{

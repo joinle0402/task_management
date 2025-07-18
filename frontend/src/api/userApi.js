@@ -2,8 +2,8 @@ import http from '@/http';
 
 const prefix = '/users';
 
-export const fetchUsers = async () => {
-    return http.get(prefix);
+export const fetchUsers = async (params) => {
+    return http.get(prefix, { params });
 };
 
 export const fetchUser = async (id) => {

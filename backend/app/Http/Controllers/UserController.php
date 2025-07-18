@@ -7,6 +7,7 @@ use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -15,9 +16,22 @@ use Symfony\Component\HttpFoundation\Response as Status;
 
 class UserController extends Controller
 {
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
-        return UserResource::collection(User::paginate(15));
+        return UserResource::collection(
+            User::query()
+                ->when(
+                    $request->filled('sort'),
+                    function ($query) use ($request) {
+                        foreach ($request->input('sort') as $sortParam) {
+                            [$field, $direction] = explode(':', $sortParam);
+                            $query->orderBy($field, $direction);
+                        }
+                    },
+                    fn($query) => $query->orderBy('id', 'DESC')
+                )
+                ->paginate($request->input('pageSize', 10))
+        );
     }
 
     public function store(StoreUserRequest $request): UserResource

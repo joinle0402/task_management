@@ -1,101 +1,84 @@
-import { use, useCallback, useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { use, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Box, Button, IconButton, LinearProgress, Stack, Switch, Typography } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { DataGrid } from '@mui/x-data-grid';
 import { deleteUser, fetchUsers } from '@/api/userApi';
 import { ConfirmDialogContext } from '@/contexts/ConfirmDialogContext';
-import { useLocation, useNavigate } from 'react-router-dom';
-import Breadcrumbs from '@/components/Breadcrumbs';
-import { handleApiError } from '@/utilities/response';
 import { LoaderContext } from '@/contexts/LoaderContext';
 import { AuthContext } from '@/contexts/AuthContext.jsx';
+
+import { handleApiError } from '@/utilities/response';
 import { showError } from '@/utilities/toast.jsx';
-import ModeEditOutlinedIcon from '@mui/icons-material/ModeEditOutlined';
 import { exportFile } from '@/utilities/downloadFile.js';
-import { DataGrid } from '@mui/x-data-grid';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import dayjs from 'dayjs';
+import ModeEditOutlinedIcon from '@mui/icons-material/ModeEditOutlined';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export default function UserList() {
     const location = useLocation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+
     const { profileUser } = use(AuthContext);
     const { confirm } = use(ConfirmDialogContext);
     const { showLoading, hideLoading } = use(LoaderContext);
 
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
     const [sortModel, setSortModel] = useState([]);
-    const sort = useMemo(() => sortModel.map((s) => `${s.field}:${s.sort}`).join(','), [sortModel]);
+
     const { page, pageSize } = paginationModel;
-    const { data: paginate, isFetching } = useQuery({
+    const sort = sortModel.map((s) => `${s.field}:${s.sort}`).join(',');
+
+    const { data: paginate, isLoading } = useQuery({
         queryKey: ['users', page, pageSize, sort],
         queryFn: () => fetchUsers({ page: page + 1, pageSize, sort }),
-        keepPreviousData: true,
-        staleTime: 1000,
+        placeholderData: keepPreviousData,
     });
-
-    const handlePaginationChange = useCallback((model) => {
-        setPaginationModel((prev) => (prev.page !== model.page || prev.pageSize !== model.pageSize ? model : prev));
-    }, []);
-
-    const handleSortChange = useCallback((model) => {
-        setSortModel((prev) => (JSON.stringify(prev) !== JSON.stringify(model) ? model : prev));
-    }, []);
 
     const { mutate: remove } = useMutation({
         mutationFn: deleteUser,
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'], exact: falsecolumns }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'], exact: false }).then(),
         onMutate: () => showLoading(),
         onSettled: () => hideLoading(),
         onError: (error) => handleApiError(error),
     });
 
-    const columns = useMemo(
-        () => [
-            {
-                field: 'index',
-                headerName: '#',
-                width: 70,
-                sortable: false,
-            },
-            { field: 'name', headerName: 'Name', flex: 1 },
-            { field: 'email', headerName: 'Email', flex: 1 },
-            { field: 'phone', headerName: 'Phone', flex: 1 },
-            { field: 'created_at', headerName: 'Created At', valueFormatter: (params) => dayjs(params.value).format('DD/MM/YYYY'), flex: 1 },
-            {
-                field: 'is_active',
-                headerName: 'Active',
-                width: 100,
-                renderCell: (params) => <Switch checked={params.value} color="primary" />,
-            },
-            {
-                field: 'actions',
-                headerName: 'Actions',
-                width: 120,
-                sortable: false,
-                renderCell: ({ row }) => (
-                    <Stack direction="row" gap={1}>
-                        <IconButton color="error" onClick={() => handleButtonDeleteClicked(row)}>
-                            <DeleteIcon />
-                        </IconButton>
-                        <IconButton color="warning" onClick={() => handleButtonUpdateClicked(row.id)}>
-                            <ModeEditOutlinedIcon />
-                        </IconButton>
-                    </Stack>
-                ),
-            },
-        ],
-        [],
-    );
-
-    const rows = useMemo(() => {
-        return (
-            paginate?.data?.map((item, i) => ({
-                ...item,
-                index: paginationModel.page * paginationModel.pageSize + i + 1,
-            })) ?? []
-        );
-    }, [paginate, paginationModel]);
+    const columns = [
+        {
+            field: 'index',
+            headerName: '#',
+            width: 70,
+            sortable: false,
+        },
+        { field: 'name', headerName: 'Name', flex: 1 },
+        { field: 'email', headerName: 'Email', flex: 1 },
+        { field: 'phone', headerName: 'Phone', flex: 1 },
+        { field: 'created_at', headerName: 'Created At', valueFormatter: (params) => dayjs(params.value).format('DD/MM/YYYY'), flex: 1 },
+        {
+            field: 'is_active',
+            headerName: 'Active',
+            width: 100,
+            renderCell: (params) => <Switch checked={params.value} color="primary" />,
+        },
+        {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 120,
+            sortable: false,
+            renderCell: ({ row }) => (
+                <Stack direction="row" gap={1}>
+                    <IconButton color="error" onClick={() => handleButtonDeleteClicked(row)}>
+                        <DeleteIcon />
+                    </IconButton>
+                    <IconButton color="warning" onClick={() => handleButtonUpdateClicked(row.id)}>
+                        <ModeEditOutlinedIcon />
+                    </IconButton>
+                </Stack>
+            ),
+        },
+    ];
 
     async function handleButtonDeleteClicked(user) {
         if (profileUser.id === user.id) {
@@ -128,17 +111,23 @@ export default function UserList() {
             <Box mt={1}>
                 <DataGrid
                     checkboxSelection
-                    rows={rows}
+                    showToolbar
+                    rows={
+                        paginate?.data?.map((item, i) => ({
+                            ...item,
+                            index: paginationModel.page * paginationModel.pageSize + i + 1,
+                        })) ?? []
+                    }
                     columns={columns}
                     rowCount={paginate?.meta?.total ?? 0}
                     paginationMode="server"
                     sortingMode="server"
                     paginationModel={paginationModel}
-                    onPaginationModelChange={handlePaginationChange}
+                    onPaginationModelChange={setPaginationModel}
                     sortModel={sortModel}
-                    onSortModelChange={handleSortChange}
+                    onSortModelChange={setSortModel}
                     disableMultipleColumnsSorting={false}
-                    loading={isFetching && !paginate}
+                    loading={isLoading}
                     pageSizeOptions={[5, 10, 20]}
                     slots={{ loadingOverlay: LinearProgress }}
                 />

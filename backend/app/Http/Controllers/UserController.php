@@ -23,14 +23,15 @@ class UserController extends Controller
                 ->when(
                     $request->filled('sort'),
                     function ($query) use ($request) {
-                        foreach ($request->input('sort') as $sortParam) {
+                        $sort = explode(',', $request->input('sort'));
+                        foreach ($sort as $sortParam) {
                             [$field, $direction] = explode(':', $sortParam);
                             $query->orderBy($field, $direction);
                         }
                     },
                     fn($query) => $query->orderBy('id', 'DESC')
                 )
-                ->paginate($request->input('pageSize', 10))
+                ->paginate($request->input('pageSize', 10), page: $request->input('page', 1))
         );
     }
 
